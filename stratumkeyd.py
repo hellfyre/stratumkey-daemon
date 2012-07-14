@@ -60,7 +60,7 @@ class SerialThread (threading.Thread):
                         self.ser.flushInput()
 
             elif (command == 0x02): # Door bell
-                relayDoorBell()
+                self.ser.relayDoorBell()
 
             cipher = None
 

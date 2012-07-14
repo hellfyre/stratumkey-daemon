@@ -42,3 +42,6 @@ class Serial:
         #self.ser.writeBytes('\x10')
         outputfile.write('success')
         outputfile.flush()
+        
+    def relayDoorBell(self):
+        print "Relaying door bell ;P"
