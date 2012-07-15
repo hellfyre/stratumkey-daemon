@@ -8,8 +8,8 @@ import struct
 import threading
 import argparse
 
-import stratumkeyKeydb
-import stratumkeySerial
+import keydb
+import serial
 
 random = None
 outputfile = None
@@ -19,7 +19,7 @@ class SerialThread (threading.Thread):
     def __init__(self, port, dbfile):
         # Set up serial connection
         # try
-        self.ser = stratumkeySerial.Serial(port)
+        self.ser = serial.Serial(port)
 
         # Set up database
         # try
@@ -28,7 +28,7 @@ class SerialThread (threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        self.db = stratumkeyKeydb.KeyDB(self.dbfile)
+        self.db = keydb.KeyDB(self.dbfile)
 
         while(True):
             command = self.ser.readCommand()
