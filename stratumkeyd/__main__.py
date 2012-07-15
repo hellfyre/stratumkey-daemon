@@ -1,10 +1,12 @@
 import os
+import sys
 import daemon
 import lockfile
 import hashlib
 import struct
 import threading
 import argparse
+import serial
 
 import keydb
 import serialwrapper
@@ -16,11 +18,17 @@ class SerialThread (threading.Thread):
 
     def __init__(self, port, dbfile):
         # Set up serial connection
-        # try
-        self.ser = serialwrapper.Serial(port)
+        try:
+            self.ser = serialwrapper.Serial(port)
+        except serial.SerialException as e:
+            print "Error setting up serial:"
+            print e
+            sys.exit(1)
 
         # Set up database
-        # try
+        if not os.path.exists(dbfile):
+            print "Database file " + dbfile + " not found."
+            sys.exit(1)
         self.dbfile = dbfile
 
         threading.Thread.__init__(self)
@@ -92,8 +100,10 @@ def main():
 
     if not args.no_daemon:
         d = daemon.DaemonContext()
-        d.working_directory='/var/lib/stratumkey' #TODO: check for dir and create, if necessary
         d.pidfile=lockfile.FileLock('/var/run/stratumkey.pid')
+        d.working_directory='/var/lib/stratumkey'
+        if not os.path.exists(d.working_directory):
+            os.makedirs(d.working_directory, 0644)
 
         d.files_preserve=[outputfile]
 

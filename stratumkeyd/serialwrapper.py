@@ -4,7 +4,11 @@ import hashlib
 
 class Serial:
     def __init__(self, port):
-        self.ser = serial.Serial(port, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, None, 0, 0, None)
+        try:
+            self.ser = serial.Serial(port, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, None, 0, 0, None)
+        except serial.SerialException:
+            raise
+
         self.ser.open()
         self.ser.flushInput()
         self.cipher = hashlib.sha256()
