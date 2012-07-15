@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import os
-import sys
 import daemon
 import lockfile
 import hashlib
@@ -11,8 +10,6 @@ import argparse
 
 import stratumkeyKeydb
 import stratumkeySerial
-
-import time
 
 random = None
 outputfile = None

@@ -1,7 +1,5 @@
 import serial
 import struct
-import sys
-import time
 import hashlib
 
 class Serial:
@@ -16,7 +14,7 @@ class Serial:
 
     def readBytes(self, count):
         arr = bytearray()
-        for i in range(0,count):
+        for _ in range(count):
             arr.append(struct.unpack('B', self.ser.read(1))[0])
         return arr
 
