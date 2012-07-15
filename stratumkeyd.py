@@ -37,13 +37,13 @@ class SerialThread (threading.Thread):
             command = self.ser.readCommand()
             if (command == 0x01): # Key auth
                 cipher = hashlib.sha256()
-                id = self.ser.readID()
+                keyid = self.ser.readID()
 
                 challenge = random.read(32)
                 self.ser.writeBytes(challenge)
                 response = self.ser.readBytes(32)
 
-                key = self.db.getKey(id)
+                key = self.db.getKey(keyid)
 
                 if (key != None):
                     key_and_challenge = bytearray()
