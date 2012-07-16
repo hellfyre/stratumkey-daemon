@@ -7,9 +7,16 @@ import struct
 import threading
 import argparse
 import serial
+import signal
 
 import keydb
 import serialwrapper
+
+def sig_int(signal, frame):
+    #TODO: maybe stop the SerialThread here?
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, sig_int)
 
 random = None
 outputfile = None
