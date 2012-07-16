@@ -8,6 +8,7 @@ import threading
 import argparse
 import serial
 import signal
+import socket
 
 import keydb
 import serialwrapper
@@ -74,11 +75,22 @@ class SerialThread (threading.Thread):
 
             cipher = None
 
-"""
+
 class ControlThread (threading.Thread):
 
-  def __init__(self, socket):
-"""
+    def __init__(self, socket):
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.bind(socket)
+        self.sock.listen(1)
+        self.conn,self.addr = self.sock.accept()
+
+    def run(self):
+        while(True):
+            data = self.conn.recv(1024)
+            if not data:
+                continue
+            
+            
 
 def init():
 
@@ -94,6 +106,7 @@ def init():
 
 def main_loop():
     SerialThread(args.port, args.db_file).start()
+    ControlThread(args.socket).start()
 
 def main():
     optparser = argparse.ArgumentParser(description="StratumKey daemon is responsible for auth'ing keys used to open the Space Gate")
@@ -111,6 +124,8 @@ def main():
         d.working_directory='/var/lib/stratumkey'
         if not os.path.exists(d.working_directory):
             os.makedirs(d.working_directory, 0644)
+        if os.path.exists(args.socket):
+            os.remove(args.socket)
 
         d.files_preserve=[outputfile]
 
