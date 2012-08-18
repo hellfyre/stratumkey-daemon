@@ -118,7 +118,10 @@ def main():
     global args
     args = optparser.parse_args()
 
-    if not args.no_daemon:
+    if args.no_daemon:
+        init()
+        main_loop()
+    else:
         d = daemon.DaemonContext()
         d.pidfile=lockfile.FileLock('/var/run/stratumkey.pid')
         d.working_directory='/var/lib/stratumkey'
@@ -131,10 +134,7 @@ def main():
 
         with d:
             init()
-            main_loop()
-    else:
-        init()
-        main_loop()
+            main_loop()            
 
 if __name__ == "__main__":
     main()
