@@ -9,6 +9,7 @@ import argparse
 import serial
 import signal
 import socket
+import logging
 
 import keydb
 import serialwrapper
@@ -33,6 +34,8 @@ class SerialThread (threading.Thread):
             print e
             sys.exit(1)
 
+        self.log = logging.getLogger('main')
+
         # Set up database
         if not os.path.exists(dbfile):
             print "Database file " + dbfile + " not found."
@@ -46,13 +49,18 @@ class SerialThread (threading.Thread):
 
         while(True):
             command = self.ser.readCommand()
+            self.log.debug('Data received')
             if (command == 0x01): # Key auth
+                self.log.debug('Key auth cmd received')
                 cipher = hashlib.sha256()
                 keyid = self.ser.readID()
+                self.log.debug('Received id %d', keyid)
 
                 challenge = random.read(32)
                 self.ser.writeBytes(challenge)
+                self.log.debug('Challenge sent')
                 response = self.ser.readBytes(32)
+                self.log.debug('Received response %s', response)
 
                 key = self.db.getKey(keyid)
 
@@ -106,7 +114,7 @@ def init():
 
 def main_loop():
     SerialThread(args.port, args.db_file).start()
-    ControlThread(args.socket).start()
+    #ControlThread(args.socket).start()
 
 def main():
     optparser = argparse.ArgumentParser(description="StratumKey daemon is responsible for auth'ing keys used to open the Space Gate")
@@ -114,9 +122,17 @@ def main():
     optparser.add_argument('--db-file', '-d', help="The file containing the key database. Format is sqlite3", default='/var/lib/stratumkey/keydb')
     optparser.add_argument('--port', '-p', help="Serial interface to the StratumKey master", default='/dev/ttyUSB0')
     optparser.add_argument('--socket', '-s', help="The socket for stratumkey_ctl", default='/var/lib/stratumkey/sock_ctl')
+    optparser.add_argument('--logfile', '-l', help="Provide a file for logging", default='/var/log/stratumkey.log')
 
     global args
     args = optparser.parse_args()
+    
+    log = logging.getLogger('main')
+    loghandler = logging.FileHandler(args.logfile)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    loghandler.setFormatter(formatter)
+    log.addHandler(loghandler)
+    log.setLevel(logging.DEBUG)
 
     if not args.no_daemon:
         d = daemon.DaemonContext()
