@@ -48,6 +48,7 @@ class SerialThread (threading.Thread):
         self.db = keydb.KeyDB(self.dbfile)
 
         while(True):
+            self.log.debug('Server started, waiting for data...')
             command = self.ser.readCommand()
             self.log.debug('Data received')
             if (command == 0x01): # Key auth
@@ -57,6 +58,7 @@ class SerialThread (threading.Thread):
                 self.log.debug('Received id %d', keyid)
 
                 challenge = random.read(32)
+                self.log.debug('Challenge is %s' % challenge)
                 self.ser.writeBytes(challenge)
                 self.log.debug('Challenge sent')
                 response = self.ser.readBytes(32)
@@ -75,8 +77,11 @@ class SerialThread (threading.Thread):
                     key_hash = cipher.digest()
 
                     if (response == key_hash):
+                        self.log.debug('Key accepted')
                         self.ser.openDoor(outputfile)
                         self.ser.flushInput()
+                    else:
+                        self.log.debug('Key rejected')
 
             elif (command == 0x02): # Door bell
                 self.ser.relayDoorBell()
@@ -128,7 +133,11 @@ def main():
     args = optparser.parse_args()
     
     log = logging.getLogger('main')
-    loghandler = logging.FileHandler(args.logfile)
+    
+    if args.no_daemon:
+        loghandler = logging.StreamHandler(sys.stdout)
+    else:
+        loghandler = logging.FileHandler(args.logfile)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     loghandler.setFormatter(formatter)
     log.addHandler(loghandler)
