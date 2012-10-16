@@ -58,11 +58,10 @@ class SerialThread (threading.Thread):
                 self.log.debug('Received id %d', keyid)
 
                 challenge = random.read(32)
-                self.log.debug('Challenge is %s' % challenge)
                 self.ser.writeBytes(challenge)
                 self.log.debug('Challenge sent')
                 response = self.ser.readBytes(32)
-                self.log.debug('Received response %s', response)
+                self.log.debug('Received response')
 
                 key = self.db.getKey(keyid)
 
@@ -107,10 +106,13 @@ class ControlThread (threading.Thread):
 
 def init():
 
+    log = logging.getLogger('main')
     global random
     if os.path.exists('/dev/hwrng'):
+        log.debug('Using hardware random number generator')
         random = open('/dev/hwrng', 'rb')
     else:
+        log.debug('Using software random number generator')
         random = open('/dev/random', 'rb')
 
     global outputfile
@@ -127,7 +129,8 @@ def main():
     optparser.add_argument('--db-file', '-d', help="The file containing the key database. Format is sqlite3", default='/var/lib/stratumkey/keydb')
     optparser.add_argument('--port', '-p', help="Serial interface to the StratumKey master", default='/dev/ttyUSB0')
     optparser.add_argument('--socket', '-s', help="The socket for stratumkey_ctl", default='/var/lib/stratumkey/sock_ctl')
-    optparser.add_argument('--logfile', '-l', help="Provide a file for logging", default='/var/log/stratumkey.log')
+    optparser.add_argument('--logfile', '-f', help="Provide a file for logging", default='/var/log/stratumkey.log')
+    optparser.add_argument('--loglevel', '-l', help="Set log level to INFO, WARN or DEBUG", default='WARN')
 
     global args
     args = optparser.parse_args()
@@ -141,7 +144,12 @@ def main():
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     loghandler.setFormatter(formatter)
     log.addHandler(loghandler)
-    log.setLevel(logging.DEBUG)
+    if args.loglevel=='INFO':
+        log.setLevel(logging.INFO)
+    if args.loglevel=='WARN':
+        log.setLevel(logging.WARN)
+    if args.loglevel=='DEBUG':
+        log.setLevel(logging.DEBUG)
 
     if not args.no_daemon:
         d = daemon.DaemonContext()
