@@ -32,7 +32,6 @@ class SerialThread (threading.Thread):
 
     def __init__(self, port, dbfile):
         # Set up serial connection
-        threading.Thread.__init__(self)
         try:
             self.ser = serialwrapper.Serial(port)
         except serial.SerialException as e:
@@ -45,8 +44,6 @@ class SerialThread (threading.Thread):
             print "Database file " + dbfile + " not found."
             sys.exit(1)
         self.dbfile = dbfile
-        
-        threading.Thread.__init__(self)
 
     def run(self):
         self.db = keydb.KeyDB(self.dbfile)
@@ -87,8 +84,7 @@ class SerialThread (threading.Thread):
 
 class ControlThread (threading.Thread):
 
-    def __init__(self, socket_,dbfile):
-        threading.Thread.__init__(self)
+    def __init__(self, socketFile, dbfile):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         # Set up database
         if not os.path.exists(dbfile):
