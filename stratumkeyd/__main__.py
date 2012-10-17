@@ -103,7 +103,6 @@ class ControlThread (threading.Thread):
         try:
             self.sock.bind(socketFile)
             self.sock.listen(1)
-            self.conn,self.addr = self.sock.accept()
         except:
             self.sock.close()
             if os.path.exists(socketFile):
@@ -112,6 +111,7 @@ class ControlThread (threading.Thread):
             sys.exit(1)
 
     def run(self):
+        self.conn,self.addr = self.sock.accept()
         self.db = keydb.KeyDB(self.dbfile)
         self.log.debug("Server listening on ctl socket")
         while(True):
@@ -142,7 +142,7 @@ class ControlThread (threading.Thread):
 
     def stop(self):
         print 'Stop called..'
-        self.sock.shutdown()
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
 
 def init():
