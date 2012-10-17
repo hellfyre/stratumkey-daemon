@@ -49,7 +49,6 @@ class SerialThread (threading.Thread):
 
     def run(self):
         self.db = keydb.KeyDB(self.dbfile)
-        
 
         while(True):
             command = self.ser.readCommand()
@@ -103,7 +102,6 @@ class ControlThread (threading.Thread):
                 os.remove(socket_)
             print "ERROR socket "+ socket_ +" in use"
             sys.exit(1)
-        
 
     def run(self):
         self.db = keydb.KeyDB(self.dbfile)
@@ -136,9 +134,6 @@ class ControlThread (threading.Thread):
             
     def stop(self):
         self.sock.close()
-                
-    
-            
 
 def init():
 
