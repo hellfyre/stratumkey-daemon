@@ -33,6 +33,7 @@ outputfile = None
 class SerialThread (threading.Thread):
 
     def __init__(self, port, dbfile):
+        super(SerialThread, self).__init__()
         self.log = logging.getLogger('main')
 
         # Set up serial connection
@@ -97,6 +98,7 @@ class SerialThread (threading.Thread):
 class ControlThread (threading.Thread):
 
     def __init__(self, socketFile, dbfile):
+        super(ControlThread, self).__init__()
         self.log = logging.getLogger('main')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.dbfile = dbfile
