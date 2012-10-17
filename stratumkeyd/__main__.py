@@ -42,7 +42,6 @@ class SerialThread (threading.Thread):
             self.log.exception(e)
             sys.exit(1)
 
-        # Set up database
         self.dbfile = dbfile
 
     def run(self):
@@ -162,13 +161,12 @@ def init():
  
 def main_loop():
     log = logging.getLogger('main')
-    global controlThread
-    controlThread=ControlThread(args.socket,args.db_file)
+
+    controlThread = ControlThread(args.socket,args.db_file)
     controlThread.daemon = True
     log.debug('Starting control thread...')
     controlThread.start()
-    
-    global serialThread
+
     serialThread = SerialThread(args.port, args.db_file)
     serialThread.daemon = True
     log.debug('Starting serial thread...')
