@@ -33,15 +33,16 @@ outputfile = None
 class SerialThread (threading.Thread):
 
     def __init__(self, port, dbfile):
+        self.log = logging.getLogger('main')
+
         # Set up serial connection
         try:
+            self.log.debug('Setting up serial connnection')
             self.ser = serialwrapper.Serial(port)
         except serial.SerialException as e:
-            print "Error setting up serial:"
-            print e
+            self.log.error("Error setting up serial:")
+            self.log.exception(e)
             sys.exit(1)
-
-        self.log = logging.getLogger('main')
 
         # Set up database
         self.dbfile = dbfile
@@ -96,9 +97,8 @@ class SerialThread (threading.Thread):
 class ControlThread (threading.Thread):
 
     def __init__(self, socketFile, dbfile):
+        self.log = logging.getLogger('main')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        # Set up database
         self.dbfile = dbfile
 
         try:
@@ -114,7 +114,7 @@ class ControlThread (threading.Thread):
 
     def run(self):
         self.db = keydb.KeyDB(self.dbfile)
-        print "server linstening" 
+        self.log.debug("Server listening on ctl socket")
         while(True):
             d=self.conn.recv(1024)
             if not d:
@@ -162,12 +162,15 @@ def init():
     outputfile.write("One\n")
  
 def main_loop():
+    log = logging.getLogger('main')
     global controlThread
     controlThread=ControlThread(args.socket,args.db_file)
+    log.debug('Starting control thread...')
     controlThread.start()
-
+    
     global serialThread
     serialThread = SerialThread(args.port, args.db_file)
+    log.debug('Starting serial thread...')
     serialThread.start()
 
 def main():
@@ -186,6 +189,8 @@ def main():
     
     if args.no_daemon:
         loghandler = logging.StreamHandler(sys.stdout)
+        #TODO: Remove this
+        args.loglevel = 'DEBUG'
     else:
         loghandler = logging.FileHandler(args.logfile)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -206,9 +211,7 @@ def main():
         os.remove(args.socket)
 
     if args.no_daemon:
-        print "init"
         init()
-        print "loop"
         main_loop()
     else:
         d = daemon.DaemonContext()
@@ -218,9 +221,7 @@ def main():
             os.makedirs(d.working_directory, 0644)
         if os.path.exists(args.socket):
             os.remove(args.socket)
-            
-        
-        
+
         d.files_preserve=[outputfile]
         with d:
             try:
