@@ -19,7 +19,8 @@ import serialwrapper
 
 
 def sig_int(signal, frame):
-    #TODO: maybe stop the SerialThread here?
+    serialThread.join()
+    controlThread.join()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, sig_int)
@@ -150,9 +151,13 @@ def init():
     outputfile.write("One\n")
  
 def main_loop():
+    global controlThread
     controlThread=ControlThread(args.socket,args.db_file)
-    #SerialThread(args.port, args.db_file).start()
     controlThread.start()
+
+    global serialThread
+    serialThread = SerialThread(args.port, args.db_file)
+    serialThread.start()
 
 def main():
     optparser = argparse.ArgumentParser(description="StratumKey daemon is responsible for auth'ing keys used to open the Space Gate")
