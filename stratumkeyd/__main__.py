@@ -83,17 +83,19 @@ class ControlThread (threading.Thread):
 
     def __init__(self, socketFile, dbfile):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
         # Set up database
         self.dbfile = dbfile
+
         try:
-            self.sock.bind(socket_)
+            self.sock.bind(socketFile)
             self.sock.listen(1)
             self.conn,self.addr = self.sock.accept()
         except:
             self.sock.close()
-            if os.path.exists(socket_):
-                os.remove(socket_)
-            print "ERROR socket "+ socket_ +" in use"
+            if os.path.exists(socketFile):
+                os.remove(socketFile)
+            print "ERROR socket "+ socketFile +" in use"
             sys.exit(1)
 
     def run(self):
@@ -124,7 +126,7 @@ class ControlThread (threading.Thread):
                 print data.__class__
             self.conn,self.addr = self.sock.accept()
         print "Oops"    
-            
+
     def stop(self):
         self.sock.close()
 
