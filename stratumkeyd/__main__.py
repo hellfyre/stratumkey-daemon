@@ -40,9 +40,6 @@ class SerialThread (threading.Thread):
             sys.exit(1)
 
         # Set up database
-        if not os.path.exists(dbfile):
-            print "Database file " + dbfile + " not found."
-            sys.exit(1)
         self.dbfile = dbfile
 
     def run(self):
@@ -87,9 +84,6 @@ class ControlThread (threading.Thread):
     def __init__(self, socketFile, dbfile):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         # Set up database
-        if not os.path.exists(dbfile):
-            print "Database file " + dbfile + " not found."
-            sys.exit(1)
         self.dbfile = dbfile
         try:
             self.sock.bind(socket_)
@@ -164,7 +158,11 @@ def main():
 
     global args
     args = optparser.parse_args()
-    
+
+    if not os.path.exists(args.db_file):
+        print "Database file " + args.db_file + " not found."
+        sys.exit(1)
+
     if args.no_daemon:
         if os.path.exists(args.socket):
             os.remove(args.socket)
