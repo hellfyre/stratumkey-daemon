@@ -53,6 +53,7 @@ class SerialThread (threading.Thread):
         while(True):
             command = self.ser.readCommand()
             if (command == 0x01): # Key auth
+                self.ser.timeout_en()
                 cipher = hashlib.sha256()
                 keyid = self.ser.readID()
 
@@ -80,6 +81,7 @@ class SerialThread (threading.Thread):
                 self.ser.relayDoorBell()
 
             cipher = None
+            self.ser.timeout_dis()
 
 
 class ControlThread (threading.Thread):
