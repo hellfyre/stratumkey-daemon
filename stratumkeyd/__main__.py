@@ -19,8 +19,9 @@ import serialwrapper
 
 
 def sig_int(signal, frame):
-    serialThread.join()
+    controlThread.stop()
     controlThread.join()
+    serialThread.join()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, sig_int)
@@ -128,6 +129,8 @@ class ControlThread (threading.Thread):
         print "Oops"    
 
     def stop(self):
+        print 'Stop called..'
+        self.sock.shutdown()
         self.sock.close()
 
 def init():
