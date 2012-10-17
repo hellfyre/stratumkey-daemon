@@ -1,16 +1,16 @@
-import os
-import sys
-import daemon
-import lockfile
-import hashlib
-import struct
-import threading
 import argparse
+import daemon
+import hashlib
+import lockfile
+import logging
+import os
+import pickle
 import serial
 import signal
 import socket
-import logging
-import pickle
+import struct
+import sys
+import threading
 from types import *
 
 import stratumkeyd
