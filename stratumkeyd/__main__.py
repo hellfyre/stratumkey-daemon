@@ -10,12 +10,19 @@ import serial
 import signal
 import socket
 import logging
+import pickle
+from types import *
 
+import stratumkeyd
+import protocol
 import keydb
 import serialwrapper
 
+
 def sig_int(signal, frame):
-    #TODO: maybe stop the SerialThread here?
+    controlThread.stop()
+    controlThread.join()
+    serialThread.join()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, sig_int)
@@ -37,12 +44,7 @@ class SerialThread (threading.Thread):
         self.log = logging.getLogger('main')
 
         # Set up database
-        if not os.path.exists(dbfile):
-            print "Database file " + dbfile + " not found."
-            sys.exit(1)
         self.dbfile = dbfile
-
-        threading.Thread.__init__(self)
 
     def run(self):
         self.db = keydb.KeyDB(self.dbfile)
@@ -53,6 +55,8 @@ class SerialThread (threading.Thread):
             self.log.debug('Data received')
             if (command == 0x01): # Key auth
                 self.log.debug('Key auth cmd received')
+                self.ser.timeout_en()
+
                 cipher = hashlib.sha256()
                 keyid = self.ser.readID()
                 self.log.debug('Received id %d', keyid)
@@ -86,23 +90,61 @@ class SerialThread (threading.Thread):
                 self.ser.relayDoorBell()
 
             cipher = None
+            self.ser.timeout_dis()
 
 
 class ControlThread (threading.Thread):
 
-    def __init__(self, socket):
+    def __init__(self, socketFile, dbfile):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.bind(socket)
-        self.sock.listen(1)
-        self.conn,self.addr = self.sock.accept()
+
+        # Set up database
+        self.dbfile = dbfile
+
+        try:
+            self.sock.bind(socketFile)
+            self.sock.listen(1)
+            self.conn,self.addr = self.sock.accept()
+        except:
+            self.sock.close()
+            if os.path.exists(socketFile):
+                os.remove(socketFile)
+            print "ERROR socket "+ socketFile +" in use"
+            sys.exit(1)
 
     def run(self):
+        self.db = keydb.KeyDB(self.dbfile)
+        print "server linstening" 
         while(True):
-            data = self.conn.recv(1024)
-            if not data:
+            d=self.conn.recv(1024)
+            if not d:
                 continue
-            
-            
+            print len(d)
+            data= pickle.loads(d)
+            if isinstance(data, protocol.modify_command) or isinstance(data,stratumkeyd.protocol.modify_command):
+                if data.command=="add":
+                    self.db.addKey(data.id, str(data.key))
+                    response = protocol.response(data.command,"FAILED")
+                    test=self.db.getKey(data.id)
+                    if test:
+                        print test
+                        response.result="OK"
+                    self.conn.send(pickle.dumps(response))
+                elif data.command == "del":
+                    response = protocol.response(data.command,"NOT IMPLEMENTED")
+                    self.conn.send(pickle.dumps(response))
+                
+            else:
+                response = protocol.response(data.command,"NOT IMPLEMENTED")
+                self.conn.send(pickle.dumps(response))
+                print data.__class__
+            self.conn,self.addr = self.sock.accept()
+        print "Oops"    
+
+    def stop(self):
+        print 'Stop called..'
+        self.sock.shutdown()
+        self.sock.close()
 
 def init():
 
@@ -118,10 +160,15 @@ def init():
     global outputfile
     outputfile = open("/var/lib/stratumkey/foobar", 'w')
     outputfile.write("One\n")
-
+ 
 def main_loop():
-    SerialThread(args.port, args.db_file).start()
-    #ControlThread(args.socket).start()
+    global controlThread
+    controlThread=ControlThread(args.socket,args.db_file)
+    controlThread.start()
+
+    global serialThread
+    serialThread = SerialThread(args.port, args.db_file)
+    serialThread.start()
 
 def main():
     optparser = argparse.ArgumentParser(description="StratumKey daemon is responsible for auth'ing keys used to open the Space Gate")
@@ -151,7 +198,19 @@ def main():
     if args.loglevel=='DEBUG':
         log.setLevel(logging.DEBUG)
 
-    if not args.no_daemon:
+    if not os.path.exists(args.db_file):
+        print "Database file " + args.db_file + " not found."
+        sys.exit(1)
+
+    if os.path.exists(args.socket):
+        os.remove(args.socket)
+
+    if args.no_daemon:
+        print "init"
+        init()
+        print "loop"
+        main_loop()
+    else:
         d = daemon.DaemonContext()
         d.pidfile=lockfile.FileLock('/var/run/stratumkey.pid')
         d.working_directory='/var/lib/stratumkey'
@@ -159,15 +218,16 @@ def main():
             os.makedirs(d.working_directory, 0644)
         if os.path.exists(args.socket):
             os.remove(args.socket)
-
+            
+        
+        
         d.files_preserve=[outputfile]
-
         with d:
-            init()
-            main_loop()
-    else:
-        init()
-        main_loop()
-
+            try:
+                init()
+                main_loop()
+            except:
+                os.remove(args.socket)  
+        
 if __name__ == "__main__":
     main()

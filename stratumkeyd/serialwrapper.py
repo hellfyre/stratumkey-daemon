@@ -40,6 +40,12 @@ class Serial:
     def flushOutput(self):
         self.ser.flushOutput()
 
+    def timeout_en(self):
+        self.ser.timeout=0.5
+
+    def timeout_dis(self):
+        self.ser.timeout=None
+
     def openDoor(self, outputfile):
         #self.ser.writeBytes('\x10')
         outputfile.write('success')
