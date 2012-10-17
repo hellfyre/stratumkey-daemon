@@ -165,16 +165,14 @@ def main():
         print "Database file " + args.db_file + " not found."
         sys.exit(1)
 
+    if os.path.exists(args.socket):
+        os.remove(args.socket)
+
     if args.no_daemon:
-        if os.path.exists(args.socket):
-            os.remove(args.socket)
-        try:
-            print "init"
-            init()
-            print "loop"
-            main_loop()
-        except:
-            os.remove(args.socket)
+        print "init"
+        init()
+        print "loop"
+        main_loop()
     else:
         d = daemon.DaemonContext()
         d.pidfile=lockfile.FileLock('/var/run/stratumkey.pid')
