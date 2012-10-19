@@ -97,7 +97,7 @@ class ControlThread (threading.Thread):
         super(ControlThread, self).__init__()
         self.log = logging.getLogger('main')
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.dbfile = dbfile
+        self.db = keydb.KeyDB(dbfile)
 
         try:
             self.sock.bind(socketFile)
@@ -109,7 +109,6 @@ class ControlThread (threading.Thread):
 
     def run(self):
         self.conn,self.addr = self.sock.accept()
-        self.db = keydb.KeyDB(self.dbfile)
         self.log.debug("Server listening on ctl socket")
         while(True):
             d=self.conn.recv(1024)
