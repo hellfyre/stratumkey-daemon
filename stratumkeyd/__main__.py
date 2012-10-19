@@ -78,11 +78,11 @@ class SerialThread (threading.Thread):
                     key_hash = cipher.digest()
 
                     if (response == key_hash):
-                        self.log.debug('Key accepted')
+                        self.log.info('Key for id ' + keyid + ' accepted')
                         self.ser.openDoor(outputfile)
                         self.ser.flushInput()
                     else:
-                        self.log.debug('Key rejected')
+                        self.log.info('Key for id ' + keyid + ' rejected')
 
             elif (command == 0x02): # Door bell
                 self.ser.relayDoorBell()
@@ -104,12 +104,12 @@ class ControlThread (threading.Thread):
             self.sock.listen(1)
         except:
             self.sock.close()
-            print "ERROR socket "+ socketFile +" in use"
+            self.log.error("Socket "+ socketFile +" in use")
             sys.exit(1)
 
     def run(self):
+        self.log.debug("Server listening on socket" + self.sock.getsockname())
         self.conn,self.addr = self.sock.accept()
-        self.log.debug("Server listening on ctl socket")
         while(True):
             d=self.conn.recv(1024)
             if not d:
