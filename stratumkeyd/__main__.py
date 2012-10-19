@@ -4,17 +4,13 @@ import hashlib
 import lockfile
 import logging
 import os
-import pickle
 import serial
 import signal
 import socket
 import struct
 import sys
 import threading
-from types import *
 
-import stratumkeyd
-import protocol
 import keydb
 import serialwrapper
 
@@ -79,8 +75,7 @@ class SerialThread (threading.Thread):
 
                     if (response == key_hash):
                         self.log.info('Key for id ' + keyid + ' accepted')
-                        self.ser.openDoor(outputfile)
-                        self.ser.flushInput()
+                        self.ser.openDoor()
                     else:
                         self.log.info('Key for id ' + keyid + ' rejected')
 
@@ -104,42 +99,44 @@ class ControlThread (threading.Thread):
             self.sock.listen(1)
         except:
             self.sock.close()
-            self.log.error("Socket "+ socketFile +" in use")
+            self.log.error('Socket ' + socketFile + ' in use')
             sys.exit(1)
 
     def run(self):
-        self.log.debug("Server listening on socket" + self.sock.getsockname())
-        self.conn,self.addr = self.sock.accept()
-        while(True):
-            d=self.conn.recv(1024)
-            if not d:
-                continue
-            print len(d)
-            data= pickle.loads(d)
-            if isinstance(data, protocol.modify_command) or isinstance(data,stratumkeyd.protocol.modify_command):
-                if data.command=="add":
-                    self.db.addKey(data.id, str(data.key))
-                    response = protocol.response(data.command,"FAILED")
-                    test=self.db.getKey(data.id)
-                    if test:
-                        print test
-                        response.result="OK"
-                    self.conn.send(pickle.dumps(response))
-                elif data.command == "del":
-                    response = protocol.response(data.command,"NOT IMPLEMENTED")
-                    self.conn.send(pickle.dumps(response))
-                
-            else:
-                response = protocol.response(data.command,"NOT IMPLEMENTED")
-                self.conn.send(pickle.dumps(response))
-                print data.__class__
+        self.log.debug('Server listening on socket ' + self.sock.getsockname())
+        while(True): #connection loop
             self.conn,self.addr = self.sock.accept()
-        print "Oops"    
+            self.log.info('Client connected')
 
-    def stop(self):
-        print 'Stop called..'
-        self.sock.shutdown(socket.SHUT_RDWR)
+            while(True): #recv loop
+                cmd = self.conn.recv(1024)
+                if not cmd: #client terminated the connection
+                    self.log.info('Client disconnected')
+                    break
+                self.process_cmd(cmd.split(' '))
+
+    def process_cmd(self, cmd):
+        if cmd[0] == 'add':
+            # 1. generate random id and key
+            # 2. check the DB for collisions
+            # 3. save them to a file and to the DB
+            
+            #self.db.addKey(data.id, str(data.key))
+            self.log.debug('Stub: add ' + cmd[1])
+            self.conn.send('Added ' + cmd[1])
+
+        elif cmd[0] == 'del':
+            self.log.debug('Stub: del ' + cmd[1])
+            self.conn.send('Deleted ' + cmd[1])
+        else:
+            self.log.debug('Not implemented')
+
+    def __del__(self):
+        socketname = self.sock.getsockname()
+        self.conn.close()
         self.sock.close()
+        if os.path.exists(socketname):
+            os.remove(socketname)
 
 def init():
 
@@ -152,10 +149,6 @@ def init():
         log.debug('Using software random number generator')
         random = open('/dev/random', 'rb')
 
-    global outputfile
-    outputfile = open("/var/lib/stratumkey/foobar", 'w')
-    outputfile.write("One\n")
- 
 def main_loop():
     log = logging.getLogger('main')
 
@@ -221,7 +214,6 @@ def main():
         if os.path.exists(args.socket):
             os.remove(args.socket)
 
-        d.files_preserve=[outputfile]
         with d:
             try:
                 init()

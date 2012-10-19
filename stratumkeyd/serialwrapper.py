@@ -46,10 +46,9 @@ class Serial:
     def timeout_dis(self):
         self.ser.timeout=None
 
-    def openDoor(self, outputfile):
+    def openDoor(self):
         #self.ser.writeBytes('\x10')
-        outputfile.write('success')
-        outputfile.flush()
+        print 'Stub: open door'
         
     def relayDoorBell(self):
         print "Relaying door bell ;P"
