@@ -104,8 +104,6 @@ class ControlThread (threading.Thread):
             self.sock.listen(1)
         except:
             self.sock.close()
-            if os.path.exists(socketFile):
-                os.remove(socketFile)
             print "ERROR socket "+ socketFile +" in use"
             sys.exit(1)
 
