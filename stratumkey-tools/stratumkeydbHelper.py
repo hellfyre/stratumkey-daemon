@@ -90,3 +90,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# vim: set expandtab shiftwidth=4 tabstop=4:

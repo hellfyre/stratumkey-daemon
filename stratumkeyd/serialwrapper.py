@@ -52,3 +52,5 @@ class Serial:
         
     def relayDoorBell(self):
         print "Relaying door bell ;P"
+
+# vim: set expandtab shiftwidth=4 tabstop=4:

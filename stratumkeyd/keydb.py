@@ -28,3 +28,5 @@ class KeyDB:
 
     def close(self):
         self.conn.close()
+
+# vim: set expandtab shiftwidth=4 tabstop=4:
