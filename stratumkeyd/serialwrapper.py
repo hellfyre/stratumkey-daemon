@@ -16,41 +16,16 @@ class Serial:
     def __del__(self):
         self.ser.close()
 
-    def readBytes(self, count):
-        arr = bytearray()
-        for _ in range(count):
-            arr.append(struct.unpack('B', self.ser.read(1))[0])
-        return arr
+    def read(self, count):
+        return self.ser.read(count)
 
-    def writeBytes(self, data):
-        return self.ser.write(buffer(data))
-
-    def readCommand(self):
-        cmd = struct.unpack('B', self.ser.read(1))[0]
-        return cmd
-
-    def readID(self):
-        d1=struct.unpack('B', self.ser.read(1))[0]
-        d2=struct.unpack('B', self.ser.read(1))[0]
-        return (d1<<8) + d2
+    def write(self, data):
+        return self.ser.write(data)
 
     def flushInput(self):
         self.ser.flushInput()
 
     def flushOutput(self):
         self.ser.flushOutput()
-
-    def timeout_en(self):
-        self.ser.timeout=0.5
-
-    def timeout_dis(self):
-        self.ser.timeout=None
-
-    def openDoor(self):
-        #self.ser.writeBytes('\x10')
-        print 'Stub: open door'
-        
-    def relayDoorBell(self):
-        print "Relaying door bell ;P"
 
 # vim: set expandtab shiftwidth=4 tabstop=4:

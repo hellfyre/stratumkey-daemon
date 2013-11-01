@@ -56,9 +56,9 @@ class SerialThread (threading.Thread):
                 self.log.debug('Received id %d', keyid)
 
                 challenge = random.read(32)
-                self.ser.writeBytes(challenge)
+                self.ser.write(challenge)
                 self.log.debug('Challenge sent')
-                response = self.ser.readBytes(32)
+                response = self.ser.read(32)
                 self.log.debug('Received response')
 
                 key = self.db.getKey(keyid)
