@@ -196,7 +196,7 @@ def main():
         log.setLevel(logging.DEBUG)
 
     if not os.path.exists(args.db_file):
-        print "Database file " + args.db_file + " not found."
+        print("Database file " + args.db_file + " not found.")
         sys.exit(1)
 
     if os.path.exists(args.socket):
@@ -210,7 +210,7 @@ def main():
         d.pidfile=lockfile.FileLock('/var/run/stratumkey.pid')
         d.working_directory='/var/lib/stratumkey'
         if not os.path.exists(d.working_directory):
-            os.makedirs(d.working_directory, 0644)
+            os.makedirs(d.working_directory, 0o644)
         if os.path.exists(args.socket):
             os.remove(args.socket)
 
