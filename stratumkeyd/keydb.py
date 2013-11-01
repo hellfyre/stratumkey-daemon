@@ -8,23 +8,21 @@ class KeyDB:
         self.conn.close()
 
     def createTable(self):
-        cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE keys (key_id integer, key blob)")
-        self.conn.commit()
+        self.conn.execute("CREATE TABLE keys (key_id INTEGER PRIMARY KEY, key BLOB, last_used TEXT, active INTEGER);")
 
-    def getKey(self, keyid):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT key FROM keys WHERE key_id = ?", (keyid,))
-        row = cursor.fetchone()
-        if (row != None):
-            return str(row[0])
-        else:
-            return None
+    def tableMissing(self):
+        result = self.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='keys';").fetchall()
+        return len(result) == 0
+
+    def getKeyTuple(self, keyid):
+        return self.conn.execute("SELECT key, last_used, active FROM keys WHERE key_id = ?", (keyid,)).fetchone()
 
     def addKey(self, keyid, key):
-        cursor = self.conn.cursor()
-        cursor.execute("INSERT INTO keys VALUES (?,?)", (keyid, buffer(key)))
-        self.conn.commit()
+        try:
+            with self.conn:
+                self.conn.execute("INSERT INTO keys VALUES (?,?)", (keyid, key))
+        except sqlite3.IntegrityError as e:
+            print("Database error:", e)
 
     def close(self):
         self.conn.close()
