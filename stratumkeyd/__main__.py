@@ -11,11 +11,12 @@ import struct
 import sys
 import threading
 
-import keydb
-import serialwrapper
+from . import keydb
+from . import serialwrapper
 
 
 def sig_int(signal, frame):
+    #TODO: clean up
     sys.exit(0)
 
 signal.signal(signal.SIGINT, sig_int)
@@ -61,12 +62,12 @@ class SerialThread (threading.Thread):
                 response = self.ser.read(32)
                 self.log.debug('Received response')
 
-                key = self.db.getKey(keyid)
+                keySecret, keyLastUsed, keyActive = self.db.getKeyTuple(keyid)
 
-                if (key != None):
+                if (keySecret != None):
                     key_and_challenge = bytearray()
                     for i in range(0,32):
-                        a = struct.unpack('B', key[i])[0]
+                        a = struct.unpack('B', keySecret[i])[0]
                         b = struct.unpack('B', challenge[i])[0]
                         key_and_challenge.append( struct.pack('B', (a & b)) )
 
