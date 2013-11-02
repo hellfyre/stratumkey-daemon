@@ -1,6 +1,5 @@
 import argparse
 import daemon
-import hashlib
 import lockfile
 import logging
 import os
@@ -24,67 +23,6 @@ signal.signal(signal.SIGINT, sig_int)
 random = None
 outputfile = None
 
-class SerialThread (threading.Thread):
-
-    def __init__(self, port, dbfile):
-        super(SerialThread, self).__init__()
-        self.log = logging.getLogger('main')
-
-        # Set up serial connection
-        try:
-            self.log.debug('Setting up serial connnection')
-            self.ser = serialwrapper.Serial(port)
-        except serial.SerialException as e:
-            self.log.error("Error setting up serial:")
-            self.log.exception(e)
-            sys.exit(1)
-
-        self.dbfile = dbfile
-
-    def run(self):
-        self.db = keydb.KeyDB(self.dbfile)
-
-        while(True):
-            self.log.debug('Server started, waiting for data...')
-            command = self.ser.readCommand()
-            self.log.debug('Data received')
-            if (command == 0x01): # Key auth
-                self.log.debug('Key auth cmd received')
-                self.ser.timeout_en()
-
-                cipher = hashlib.sha256()
-                keyid = self.ser.readID()
-                self.log.debug('Received id %d', keyid)
-
-                challenge = random.read(32)
-                self.ser.write(challenge)
-                self.log.debug('Challenge sent')
-                response = self.ser.read(32)
-                self.log.debug('Received response')
-
-                keySecret, keyLastUsed, keyActive = self.db.getKeyTuple(keyid)
-
-                if (keySecret != None):
-                    key_and_challenge = bytearray()
-                    for i in range(0,32):
-                        a = struct.unpack('B', keySecret[i])[0]
-                        b = struct.unpack('B', challenge[i])[0]
-                        key_and_challenge.append( struct.pack('B', (a & b)) )
-
-                    cipher.update(key_and_challenge)
-                    key_hash = cipher.digest()
-
-                    if (response == key_hash):
-                        self.log.info('Key for id ' + keyid + ' accepted')
-                        self.ser.openDoor()
-                    else:
-                        self.log.info('Key for id ' + keyid + ' rejected')
-
-            elif (command == 0x02): # Door bell
-                self.ser.relayDoorBell()
-
-            cipher = None
-            self.ser.timeout_dis()
 
 
 class ControlThread (threading.Thread):
