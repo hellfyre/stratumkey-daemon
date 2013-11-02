@@ -1,20 +1,26 @@
 import serial
-import struct
 import hashlib
 
-class Serial:
-    def __init__(self, port):
-        try:
-            self.ser = serial.Serial(port, 9600, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, None, 0, 0, None)
-        except serial.SerialException:
-            raise
+class SerialWrapper:
+    def __init__(self, port, baudrate):
+        self.port = port
+        self.baudrate = baudrate
+        self.bytesize = serial.EIGHTBITS
+        self.parity = serial.PARITY_NONE
+        self.stopbits = serial.STOPBITS_ONE
 
-        self.ser.open()
-        self.ser.flushInput()
         self.cipher = hashlib.sha256()
 
     def __del__(self):
         self.ser.close()
+
+    def connect(self):
+        try:
+            self.ser = serial.Serial(self.port, self.baudrate, self.bytesize, self.parity, self.stopbits, None, 0, 0, None)
+        except serial.SerialException:
+            raise
+        self.ser.open()
+        self.ser.flushInput()
 
     def read(self, count):
         return self.ser.read(count)
